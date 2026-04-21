@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloudflare Free Tier — Live Infrastructure Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Cloudflare Turnstile — free, privacy-preserving CAPTCHA -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-top container">
+      <a class="logo" href="/">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.5 18.5C22.433 18.5 24 16.933 24 15C24 13.067 22.433 11.5 20.5 11.5C20.328 11.5 20.159 11.513 19.994 11.537C19.45 9.232 17.391 7.5 14.917 7.5C12.02 7.5 9.667 9.853 9.667 12.75C9.667 12.921 9.676 13.09 9.692 13.257C8.102 13.642 6.917 15.08 6.917 16.792C6.917 18.507 8.107 19.947 9.702 20.329" stroke="#F6821F" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M14 22L14 14M14 14L11 17M14 14L17 17" stroke="#F6821F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Free Tier Showcase</span>
+        <span class="header-subtitle">Pages · Workers · D1 · KV · R2 · AI · Turnstile</span>
+      </a>
+      <a href="https://github.com/Churfala/cftestsite" class="btn-ghost" target="_blank" rel="noopener">View Source ↗</a>
+    </div>
+    <!-- Live stats bar — refreshes every 30s -->
+    <div class="stats-bar container" id="stats-bar">
+      <div class="sb-item"><span class="sb-label">Workers</span><span class="sb-val" id="s-workers">—</span><span class="sb-unit">req/day</span></div>
+      <div class="sb-sep"></div>
+      <div class="sb-item"><span class="sb-label">D1</span><span class="sb-val" id="s-d1">—</span><span class="sb-unit">msgs</span></div>
+      <div class="sb-sep"></div>
+      <div class="sb-item"><span class="sb-label">R2</span><span class="sb-val" id="s-r2">—</span></div>
+      <div class="sb-sep"></div>
+      <div class="sb-item"><span class="sb-label">AI</span><span class="sb-val" id="s-ai">—</span><span class="sb-unit">runs</span></div>
+      <div class="sb-sep sb-sep--grow"></div>
+      <div class="sb-item sb-item--accent"><span class="sb-label">Daily reset in</span><span class="sb-val mono" id="countdown">—</span></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Cards Grid ──────────────────────────────────────────────────────── -->
+    <div class="cards-grid container">
+
+      <!-- ── Edge Intelligence ─────────────────────────────────────────────── -->
+      <div class="card" data-svc="workers">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-workers">Workers</span>
+            <h2>Edge Intelligence</h2>
+          </div>
+        </div>
+        <p class="card-desc">Cloudflare attaches datacenter metadata to every request at the edge. Zero API calls — it's in <code>request.cf</code>. You're being served from the datacenter below.</p>
+        <div class="geo-grid" id="geo-grid"><div class="card-loading">Loading edge data…</div></div>
+        <button class="btn btn-sm" style="margin-top:.75rem" onclick="loadGeo()">↺ Refresh</button>
+        <div class="card-foot">
+          <span class="limit-label">100K req/day free</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/geo.js" class="src-link" target="_blank" rel="noopener">geo.js ↗</a>
+        </div>
+      </div>
+
+      <!-- ── Global Counter ────────────────────────────────────────────────── -->
+      <div class="card" data-svc="kv">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-kv">Workers KV</span>
+            <h2>Global Counter</h2>
+          </div>
+        </div>
+        <p class="card-desc">Atomic KV increment on every pageview. KV is eventually consistent — reads propagate across 300+ edge locations within ~60 seconds. The KV operation itself at the edge is sub-millisecond.</p>
+        <div class="counter-display">
+          <div class="counter-big" id="visit-count">—</div>
+          <div class="counter-label">total visits</div>
+        </div>
+        <div class="kv-meta-row">
+          <span class="kv-meta-label">KV reads today</span>
+          <span class="kv-meta-val mono" id="kv-reads">—</span>
+        </div>
+        <div class="card-foot">
+          <span class="limit-label">100K reads / 1K writes per day</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/counter.js" class="src-link" target="_blank" rel="noopener">counter.js ↗</a>
+        </div>
+      </div>
+
+      <!-- ── D1 Database ────────────────────────────────────────────────────── -->
+      <div class="card card-wide" data-svc="d1">
+        <div class="card-head" style="padding:1.5rem 1.5rem 0">
+          <div class="card-title-group">
+            <span class="svc-badge svc-d1">D1 SQLite</span>
+            <h2>Database at the Edge</h2>
+          </div>
+        </div>
+        <p class="card-desc" style="padding:0.5rem 1.5rem 0">Full SQLite at Cloudflare's edge. 5M reads + 100K writes/day free. Relationships, indexes, aggregate queries — all working. 3-table schema with seed data that survives daily wipe.</p>
+
+        <div class="tabs" id="d1-tabs" role="tablist">
+          <button class="tab active" role="tab" onclick="switchD1Tab('messages',this)">Guestbook</button>
+          <button class="tab" role="tab" onclick="switchD1Tab('search',this)">Full-Text Search</button>
+          <button class="tab" role="tab" onclick="switchD1Tab('stats',this)">Stats &amp; Analytics</button>
+          <button class="tab" role="tab" onclick="switchD1Tab('posts',this)">JOINs &amp; Tags</button>
+        </div>
+
+        <!-- Guestbook tab -->
+        <div class="tab-panel" id="d1-messages" role="tabpanel">
+          <form id="gb-form" class="gb-form" onsubmit="submitMessage(event)">
+            <input type="text" id="gb-name" placeholder="Your name" maxlength="50" required />
+            <textarea id="gb-msg" placeholder="Leave a message… (max 500 chars)" maxlength="500" required></textarea>
+            <!-- Replace sitekey with your own from dash.cloudflare.com → Turnstile -->
+            <!-- Local dev test key: 0x4AAAAAADAecJ5lJEFt1bmG (always passes) -->
+            <div id="gb-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAADAecJ5lJEFt1bmG" data-callback="onGbTurnstile" data-theme="dark"></div>
+            <div class="turnstile-note">↑ Cloudflare Turnstile — privacy-preserving proof-of-humanity, free &amp; unlimited. No cookies, no Google.</div>
+            <button type="submit" class="btn btn-primary" id="gb-submit">Post Message</button>
+            <div id="gb-status" class="form-status hidden"></div>
+          </form>
+          <div class="messages-list" id="messages-list"><div class="card-loading">Loading messages…</div></div>
+        </div>
+
+        <!-- Search tab -->
+        <div class="tab-panel hidden" id="d1-search" role="tabpanel">
+          <div class="search-row">
+            <input type="text" id="search-q" placeholder="Search posts and messages…" maxlength="100" />
+            <button class="btn btn-primary" onclick="doSearch()">Search</button>
+          </div>
+          <div id="search-results"><p class="muted-hint">Enter at least 2 characters and press Search.</p></div>
+        </div>
+
+        <!-- Stats tab -->
+        <div class="tab-panel hidden" id="d1-stats" role="tabpanel">
+          <div id="d1-stats-panel"><p class="muted-hint">Loading stats…</p></div>
+        </div>
+
+        <!-- Posts tab -->
+        <div class="tab-panel hidden" id="d1-posts" role="tabpanel">
+          <div id="posts-list"><div class="card-loading">Loading posts…</div></div>
+        </div>
+
+        <div class="card-foot" style="padding:1rem 1.5rem">
+          <span class="limit-label">5GB storage · 5M reads / 100K writes per day</span>
+          <a href="https://github.com/Churfala/cftestsite/tree/main/functions/api/d1" class="src-link" target="_blank" rel="noopener">functions/api/d1/ ↗</a>
+        </div>
+      </div>
+
+      <!-- ── KV Cache Demo ───────────────────────────────────────────────────── -->
+      <div class="card" data-svc="kv">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-kv">Workers KV</span>
+            <h2>Edge Cache Demo</h2>
+          </div>
+        </div>
+        <p class="card-desc">Click once → cache miss, queries D1 (slow). Click again within 60s → cache hit, served from KV (fast). The timing delta proves why caching matters at the edge.</p>
+        <button class="btn btn-primary btn-block" id="cache-btn" onclick="runKvCache()">Fetch Stats (with Cache)</button>
+        <div class="cache-result hidden" id="cache-result"></div>
+        <div class="card-foot">
+          <span class="limit-label">100K reads / 1K writes per day</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/kv/cache.js" class="src-link" target="_blank" rel="noopener">kv/cache.js ↗</a>
+        </div>
+      </div>
+
+      <!-- ── Workers AI ─────────────────────────────────────────────────────── -->
+      <div class="card" data-svc="ai">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-ai">Workers AI</span>
+            <h2>LLM Inference</h2>
+          </div>
+        </div>
+        <p class="card-desc">Llama 3.1 8B running at the edge via an AI binding. No GPU provisioning, no model deployment — just a binding call.</p>
+        <textarea id="ai-prompt" class="ai-prompt-input" maxlength="500" placeholder="Ask anything… (max 500 chars)" rows="3">What makes Cloudflare Workers fundamentally different from AWS Lambda?</textarea>
+        <div id="ai-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAADAecJ5lJEFt1bmG" data-callback="onAiTurnstile" data-theme="dark"></div>
+        <button class="btn btn-primary btn-block" id="ai-btn" onclick="runAI()">▶ Run Inference</button>
+        <div id="ai-out" class="hidden">
+          <div class="ai-response" id="ai-response"></div>
+          <div class="ai-meta" id="ai-meta"></div>
+        </div>
+        <div class="card-foot">
+          <span class="limit-label">Free beta · @cf/meta/llama-3.1-8b-instruct</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/ai/generate.js" class="src-link" target="_blank" rel="noopener">ai/generate.js ↗</a>
+        </div>
+      </div>
+
+      <!-- ── R2 Object Storage ──────────────────────────────────────────────── -->
+      <div class="card card-wide" data-svc="r2">
+        <div class="card-head" style="padding:1.5rem 1.5rem 0">
+          <div class="card-title-group">
+            <span class="svc-badge svc-r2">R2 Storage</span>
+            <h2>Object Storage — Zero Egress</h2>
+          </div>
+        </div>
+        <p class="card-desc" style="padding:0.5rem 1.5rem 0">S3-compatible object storage. Upload is Turnstile-gated and capped at 500KB. User uploads are prefixed <code>upload-</code> and wiped regularly. Demo images (prefixed <code>demo-</code>) persist across wipes.</p>
+
+        <div class="r2-body">
+          <div class="r2-upload-col">
+            <!-- Replace sitekey with your own from dash.cloudflare.com → Turnstile -->
+            <div id="r2-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAADAecJ5lJEFt1bmG" data-callback="onR2Turnstile" data-theme="dark"></div>
+            <div class="dropzone" id="dropzone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Drop an image or <span class="drop-link">click to browse</span></p>
+              <p class="drop-note">JPEG · PNG · GIF · WebP · max 500KB · wiped nightly</p>
+            </div>
+            <input type="file" id="file-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden />
+            <div id="upload-status" class="form-status hidden"></div>
+          </div>
+          <div class="r2-info-col">
+            <div class="r2-stats-row" id="r2-stats"></div>
+            <div class="r2-gallery" id="r2-gallery"><div class="card-loading">Loading gallery…</div></div>
+          </div>
+        </div>
+
+        <div class="card-foot" style="padding:1rem 1.5rem">
+          <span class="limit-label">10GB storage · 1M Class A ops/month · zero egress</span>
+          <a href="https://github.com/Churfala/cftestsite/tree/main/functions/api/r2" class="src-link" target="_blank" rel="noopener">functions/api/r2/ ↗</a>
+        </div>
+      </div>
+
+    </div><!-- /cards-grid -->
+
+    <!-- ── Free Tier Headroom ─────────────────────────────────────────────── -->
+    <section class="limits-section container">
+      <h2 class="section-title">Free Tier Headroom <span class="section-subtitle">today's usage vs. daily limits</span></h2>
+      <div class="limits-grid" id="limits-grid"><div class="card-loading">Loading…</div></div>
+    </section>
+
+    <!-- ── Architecture Diagram ───────────────────────────────────────────── -->
+    <section class="arch-section container">
+      <h2 class="section-title">Architecture</h2>
+      <div class="arch-diagram">
+        <pre>
+Browser ──── Cloudflare Edge Network (300+ global PoPs)
+  │
+  ├── /                    ──→  Pages  (static assets, global CDN, zero config)
+  │
+  ├── /api/geo             ──→  Workers  →  request.cf  (edge metadata, no DB)
+  ├── /api/counter         ──→  Workers  →  KV          (global visit counter)
+  ├── /api/guestbook       ──→  Workers  →  D1 + Turnstile
+  ├── /api/d1/stats        ──→  Workers  →  D1          (GROUP BY, COUNT, AVG)
+  ├── /api/d1/search       ──→  Workers  →  D1          (LIKE full-text search)
+  ├── /api/d1/posts        ──→  Workers  →  D1          (JOIN posts ↔ tags)
+  ├── /api/kv/cache        ──→  Workers  →  KV  ──(hit)──→  return cached
+  │                                             └─(miss)──→  D1  →  KV.put
+  ├── /api/ai/generate     ──→  Workers  →  Workers AI  (Llama 3.1 8B Instruct)
+  ├── /api/r2/upload       ──→  Workers  →  R2 + Turnstile
+  ├── /api/r2/list         ──→  Workers  →  R2          (list + metadata)
+  ├── /api/r2/file/:key    ──→  Workers  →  R2          (stream with etag)
+  ├── /api/stats           ──→  Workers  →  D1 + KV + R2  (aggregate dashboard)
+  └── /api/admin/wipe      ──→  Workers  →  D1 + R2 + KV  (wipe + re-seed)
+                                                ↑
+                                  Schedule via standalone Worker cron
+                                  or external service (e.g. cron-job.org)
+                                  Expression:  0 0 * * *  (midnight UTC daily)
+        </pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Built entirely on Cloudflare's free tier &mdash; no credit card required</span>
+      <span>
+        <a href="https://github.com/Churfala/cftestsite" target="_blank" rel="noopener">GitHub</a>
+        &nbsp;·&nbsp; Reset every 4 hours &nbsp;·&nbsp;
+        <a href="https://www.cloudflare.com/plans/" target="_blank" rel="noopener">Cloudflare Free Tier</a>
+      </span>
+    </div>
+  </footer>
+
+  <div id="toast-container" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

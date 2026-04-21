@@ -1,0 +1,26 @@
+name = "cftestsite"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cftestsite-db"
+database_id = "e680a366-9780-4739-9273-87588f659cb7"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "d48f91339d7c4a17a366a43f02a50375"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "cftestsite-bucket"
+
+[ai]
+binding = "AI"
+
+# Local dev only — replace values with your own or leave as test keys
+[vars]
+TURNSTILE_SITE_KEY = "0x4AAAAAADAecJ5lJEFt1bmG"
+# Secrets (set these in Pages dashboard, NOT here):
+#   TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"
+#   WIPE_SECRET          = "some-random-secret-you-choose"
