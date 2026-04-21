@@ -90,6 +90,8 @@ body {
   display: none;
 }
 @media (min-width: 700px) { .header-subtitle { display: inline; } }
+.header-subtitle a { color: var(--muted); text-decoration: none; }
+.header-subtitle a:hover { color: var(--cf-orange); }
 
 .btn-ghost {
   font-size: .8rem;

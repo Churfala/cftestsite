@@ -21,7 +21,14 @@
           <path d="M14 22L14 14M14 14L11 17M14 14L17 17" stroke="#F6821F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span>Free Tier Showcase</span>
-        <span class="header-subtitle">Pages · Workers · D1 · KV · R2 · AI · Turnstile</span>
+        <span class="header-subtitle">
+          <a href="#svc-workers">Workers</a> ·
+          <a href="#svc-d1">D1</a> ·
+          <a href="#svc-kv">KV</a> ·
+          <a href="#svc-r2">R2</a> ·
+          <a href="#svc-ai">AI</a> ·
+          <a href="#svc-limits">Free Tier</a>
+        </span>
       </a>
       <a href="https://github.com/Churfala/cftestsite" class="btn-ghost" target="_blank" rel="noopener">View Source ↗</a>
     </div>
@@ -45,7 +52,7 @@
     <div class="cards-grid container">
 
       <!-- ── Edge Intelligence ─────────────────────────────────────────────── -->
-      <div class="card" data-svc="workers">
+      <div class="card" id="svc-workers" data-svc="workers">
         <div class="card-head">
           <div class="card-title-group">
             <span class="svc-badge svc-workers">Workers</span>
@@ -62,7 +69,7 @@
       </div>
 
       <!-- ── Global Counter ────────────────────────────────────────────────── -->
-      <div class="card" data-svc="kv">
+      <div class="card" id="svc-kv" data-svc="kv">
         <div class="card-head">
           <div class="card-title-group">
             <span class="svc-badge svc-kv">Workers KV</span>
@@ -85,7 +92,7 @@
       </div>
 
       <!-- ── D1 Database ────────────────────────────────────────────────────── -->
-      <div class="card card-wide" data-svc="d1">
+      <div class="card card-wide" id="svc-d1" data-svc="d1">
         <div class="card-head" style="padding:1.5rem 1.5rem 0">
           <div class="card-title-group">
             <span class="svc-badge svc-d1">D1 SQLite</span>
@@ -159,7 +166,7 @@
       </div>
 
       <!-- ── Workers AI ─────────────────────────────────────────────────────── -->
-      <div class="card" data-svc="ai">
+      <div class="card" id="svc-ai" data-svc="ai">
         <div class="card-head">
           <div class="card-title-group">
             <span class="svc-badge svc-ai">Workers AI</span>
@@ -181,7 +188,7 @@
       </div>
 
       <!-- ── R2 Object Storage ──────────────────────────────────────────────── -->
-      <div class="card card-wide" data-svc="r2">
+      <div class="card card-wide" id="svc-r2" data-svc="r2">
         <div class="card-head" style="padding:1.5rem 1.5rem 0">
           <div class="card-title-group">
             <span class="svc-badge svc-r2">R2 Storage</span>
@@ -217,7 +224,7 @@
     </div><!-- /cards-grid -->
 
     <!-- ── Free Tier Headroom ─────────────────────────────────────────────── -->
-    <section class="limits-section container">
+    <section class="limits-section container" id="svc-limits">
       <h2 class="section-title">Free Tier Headroom <span class="section-subtitle">today's usage vs. daily limits</span></h2>
       <div class="limits-grid" id="limits-grid"><div class="card-loading">Loading…</div></div>
     </section>
