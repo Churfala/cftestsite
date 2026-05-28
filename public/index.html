@@ -195,7 +195,7 @@
             <h2>Object Storage — Zero Egress</h2>
           </div>
         </div>
-        <p class="card-desc" style="padding:0.5rem 1.5rem 0">S3-compatible object storage. Upload is Turnstile-gated and capped at 500KB. User uploads are prefixed <code>upload-</code> and wiped regularly. Demo images (prefixed <code>demo-</code>) persist across wipes.</p>
+        <p class="card-desc" style="padding:0.5rem 1.5rem 0">S3-compatible object storage. Upload is Turnstile-gated and capped at 500KB. User uploads are prefixed <code>upload-</code> and wiped regularly. Demo images (prefixed <code>demo-</code>) persist across wipes. Each upload is auto-captioned by a vision model (LLaVA via Workers AI) — caption stored in R2 metadata and shown on hover.</p>
 
         <div class="r2-body">
           <div class="r2-upload-col">
