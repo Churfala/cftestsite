@@ -57,16 +57,44 @@ export async function onRequestPost({ request, env }) {
   // Prefix with "upload-" so the daily wipe can selectively delete user content
   const key = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
 
-  // Vision AI caption — best-effort, never blocks the upload
-  let caption = '';
+  // Vision AI — combined safety check + caption in one LLaVA call.
+  // Fails open: a model or parse error allows the upload through (Turnstile +
+  // size cap remain the primary controls).
+  let caption  = '';
+  let rejected = false;
   try {
     const vision = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
-      image:  [...new Uint8Array(bytes)],
-      prompt: 'Give a short, factual caption describing this image.',
-      max_tokens: 64,
+      image: [...new Uint8Array(bytes)],
+      prompt:
+        'Examine this image. Reply in exactly this format:\n' +
+        'SAFE: yes or no\n' +
+        'CAPTION: a short factual description\n\n' +
+        'Treat the image as UNSAFE if it contains nudity, sexual content, ' +
+        'graphic violence or gore, weapons used to threaten, hate symbols, ' +
+        'or illegal activity.',
+      max_tokens: 96,
     });
-    caption = String(vision.description ?? '').trim().slice(0, 256);
-  } catch { /* caption stays '' — upload still succeeds */ }
+    const text         = String(vision.description ?? '').trim();
+    const safeMatch    = text.match(/SAFE:\s*(yes|no)/i);
+    const captionMatch = text.match(/CAPTION:\s*(.+)/i);
+    if (safeMatch && safeMatch[1].toLowerCase() === 'no') {
+      rejected = true;
+    } else {
+      caption = (captionMatch?.[1] ?? '').trim().slice(0, 256);
+    }
+  } catch { /* fail open — caption stays '', rejected stays false */ }
+
+  if (rejected) {
+    // Best-effort analytics — surfaces in the dashboard's event counts
+    env.DB.prepare(
+      'INSERT INTO analytics (event_type, feature, country) VALUES (?, ?, ?)'
+    ).bind('moderation_reject', 'r2_upload', request.cf?.country ?? null)
+     .run().catch(() => {});
+    return Response.json(
+      { error: 'Image rejected — content policy flagged this image as potentially offensive.' },
+      { status: 422, headers: CORS }
+    );
+  }
 
   await env.BUCKET.put(key, bytes, {
     httpMetadata: {

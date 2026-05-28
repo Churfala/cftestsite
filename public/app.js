@@ -401,6 +401,9 @@ async function uploadFile(file) {
       status.textContent = data.error || 'Upload failed';
       status.className = 'form-status err';
       toast(data.error || 'Upload failed', 'err');
+      // Content-policy reject: token is spent server-side — reset so the
+      // user can pick a different image without reloading.
+      if (res.status === 422 && window.turnstile) turnstile.reset('#r2-turnstile');
     }
   } catch (e) {
     status.textContent = 'Upload failed: ' + e.message;
