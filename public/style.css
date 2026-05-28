@@ -600,6 +600,7 @@ textarea { min-height: 72px; }
   padding: .5rem .4rem .3rem;
   font-size: .68rem; color: rgba(255,255,255,.75);
   opacity: 0; transition: opacity .2s;
+  white-space: normal; line-height: 1.25; max-height: 60%; overflow: hidden;
 }
 .gallery-item:hover .gallery-meta { opacity: 1; }
 

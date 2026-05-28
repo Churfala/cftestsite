@@ -6,7 +6,7 @@ const CORS = {
 
 export async function onRequestGet({ env }) {
   try {
-    const listed = await env.BUCKET.list({ limit: 100 });
+    const listed = await env.BUCKET.list({ limit: 100, include: ['customMetadata'] });
     const sorted = listed.objects.sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded));
 
     const total_bytes = sorted.reduce((s, o) => s + o.size, 0);
@@ -17,6 +17,7 @@ export async function onRequestGet({ env }) {
       uploaded: obj.uploaded,
       url:      `/api/r2/file/${encodeURIComponent(obj.key)}`,
       is_demo:  obj.key.startsWith('demo-'),
+      caption:  obj.customMetadata?.caption ?? '',
     }));
 
     return Response.json(

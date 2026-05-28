@@ -57,15 +57,27 @@ export async function onRequestPost({ request, env }) {
   // Prefix with "upload-" so the daily wipe can selectively delete user content
   const key = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
 
+  // Vision AI caption — best-effort, never blocks the upload
+  let caption = '';
+  try {
+    const vision = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
+      image:  [...new Uint8Array(bytes)],
+      prompt: 'Give a short, factual caption describing this image.',
+      max_tokens: 64,
+    });
+    caption = String(vision.description ?? '').trim().slice(0, 256);
+  } catch { /* caption stays '' — upload still succeeds */ }
+
   await env.BUCKET.put(key, bytes, {
     httpMetadata: {
       contentType:  file.type,
       cacheControl: 'public, max-age=86400',
     },
+    customMetadata: caption ? { caption } : undefined,
   });
 
   return Response.json(
-    { success: true, key, url: `/api/r2/file/${encodeURIComponent(key)}`, size: bytes.byteLength },
+    { success: true, key, url: `/api/r2/file/${encodeURIComponent(key)}`, size: bytes.byteLength, caption },
     { status: 201, headers: CORS }
   );
 }

@@ -370,10 +370,10 @@ async function loadR2() {
   if (!d.files?.length) { gallery.innerHTML = '<p class="muted-hint">No files yet — upload an image!</p>'; return; }
 
   gallery.innerHTML = d.files.map(f => `
-    <div class="gallery-item" title="${esc(f.key)}\n${fmtBytes(f.size)} · ${timeAgo(f.uploaded)}">
+    <div class="gallery-item" title="${esc(f.caption || f.key)}\n${fmtBytes(f.size)} · ${timeAgo(f.uploaded)}">
       ${f.is_demo ? '<span class="demo-flag">demo</span>' : ''}
-      <img src="${esc(f.url)}" alt="${esc(f.key)}" loading="lazy">
-      <div class="gallery-meta">${fmtBytes(f.size)}</div>
+      <img src="${esc(f.url)}" alt="${esc(f.caption || f.key)}" loading="lazy">
+      <div class="gallery-meta">${f.caption ? esc(f.caption) : fmtBytes(f.size)}</div>
     </div>
   `).join('');
 }
@@ -393,9 +393,9 @@ async function uploadFile(file) {
     const res  = await fetch(API.r2upload, { method: 'POST', body: form });
     const data = await res.json();
     if (res.ok) {
-      status.textContent = `Uploaded! ${fmtBytes(data.size)}`;
+      status.textContent = data.caption ? `Uploaded — “${data.caption}”` : `Uploaded! ${fmtBytes(data.size)}`;
       if (window.turnstile) turnstile.reset('#r2-turnstile');
-      setTimeout(() => { status.className = 'form-status hidden'; }, 3000);
+      setTimeout(() => { status.className = 'form-status hidden'; }, 4000);
       await loadR2();
     } else {
       status.textContent = data.error || 'Upload failed';
