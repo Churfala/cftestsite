@@ -104,6 +104,7 @@ const key = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ex
 // ── Vision AI — combined safety check + caption (one inference) ──
 let caption  = '';
 let rejected = false;
+const visionStart = Date.now();
 try {
   const vision = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
     image: [...new Uint8Array(bytes)],
@@ -116,6 +117,12 @@ try {
       'or illegal activity.',
     max_tokens: 96,
   });
+  // Mirror the text endpoint's instrumentation — shows in the dashboard's
+  // "Today's Demo Events" table (grouped by feature)
+  env.DB.prepare(
+    'INSERT INTO analytics (event_type, feature, latency_ms, country) VALUES (?, ?, ?, ?)'
+  ).bind('inference', 'vision_ai', Date.now() - visionStart, request.cf?.country ?? null)
+   .run().catch(() => {});
   const text         = String(vision.description ?? '').trim();
   const safeMatch    = text.match(/SAFE:\s*(yes|no)/i);
   const captionMatch = text.match(/CAPTION:\s*(.+)/i);
@@ -248,6 +255,9 @@ about what's shipped:
 - **Caption length** — trimmed to 256 chars to stay well under the R2
   customMetadata limit.
 - **GIF/WebP** — LLaVA reads the first frame; usable for both caption and verdict.
+- **Demo images** — the wipe seeds SVG tiles, which LLaVA can't read; they
+  carry hand-written captions in `customMetadata` instead (set in
+  `admin/wipe.js`), so the gallery most visitors see still shows captions.
 - **Daily wipe** — no change. Captions live in object metadata and are deleted
   with the object.
 - **Turnstile retry** — on `422`, the frontend resets the widget so the user

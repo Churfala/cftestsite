@@ -13,20 +13,24 @@ const SEED_MESSAGES = [
 ];
 
 const DEMO_IMAGES = [
+  // SVG tiles can't go through LLaVA (raster only) — captions are hand-written
   {
     key:     'demo-workers.svg',
     content: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#F6821F"/><text x="200" y="140" text-anchor="middle" fill="white" font-size="28" font-family="monospace" font-weight="bold">Workers</text><text x="200" y="180" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="14" font-family="monospace">V8 Isolates · Zero Cold Start</text><text x="200" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="12" font-family="monospace">100,000 req/day free</text></svg>',
     type:    'image/svg+xml',
+    caption: 'Orange Cloudflare Workers demo tile — V8 isolates, zero cold starts.',
   },
   {
     key:     'demo-d1.svg',
     content: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#8B5CF6"/><text x="200" y="140" text-anchor="middle" fill="white" font-size="28" font-family="monospace" font-weight="bold">D1 Database</text><text x="200" y="180" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="14" font-family="monospace">SQLite · 5M reads/day</text><text x="200" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="12" font-family="monospace">5GB storage free</text></svg>',
     type:    'image/svg+xml',
+    caption: 'Purple D1 demo tile — serverless SQLite at the edge.',
   },
   {
     key:     'demo-r2.svg',
     content: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#10B981"/><text x="200" y="140" text-anchor="middle" fill="white" font-size="28" font-family="monospace" font-weight="bold">R2 Storage</text><text x="200" y="180" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="14" font-family="monospace">S3-Compatible · Zero Egress</text><text x="200" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="12" font-family="monospace">10GB · 1M ops/month free</text></svg>',
     type:    'image/svg+xml',
+    caption: 'Green R2 demo tile — S3-compatible storage, zero egress.',
   },
 ];
 
@@ -67,7 +71,8 @@ export async function onRequestPost({ request, env }) {
     await Promise.all(
       DEMO_IMAGES.map(img =>
         env.BUCKET.put(img.key, img.content, {
-          httpMetadata: { contentType: img.type, cacheControl: 'public, max-age=86400' }
+          httpMetadata:   { contentType: img.type, cacheControl: 'public, max-age=86400' },
+          customMetadata: { caption: img.caption },
         })
       )
     );

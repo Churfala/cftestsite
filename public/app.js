@@ -381,7 +381,7 @@ async function loadR2() {
 async function uploadFile(file) {
   if (!r2Token) { toast('Complete the Turnstile challenge first', 'err'); return; }
   const status = document.getElementById('upload-status');
-  status.textContent = `Uploading ${file.name}…`;
+  status.textContent = `Uploading ${file.name} — vision AI analyzing…`;
   status.className = 'form-status ok';
 
   const form = new FormData();

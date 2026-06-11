@@ -62,6 +62,7 @@ export async function onRequestPost({ request, env }) {
   // size cap remain the primary controls).
   let caption  = '';
   let rejected = false;
+  const visionStart = Date.now();
   try {
     const vision = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
       image: [...new Uint8Array(bytes)],
@@ -74,6 +75,10 @@ export async function onRequestPost({ request, env }) {
         'or illegal activity.',
       max_tokens: 96,
     });
+    env.DB.prepare(
+      'INSERT INTO analytics (event_type, feature, latency_ms, country) VALUES (?, ?, ?, ?)'
+    ).bind('inference', 'vision_ai', Date.now() - visionStart, request.cf?.country ?? null)
+     .run().catch(() => {});
     const text         = String(vision.description ?? '').trim();
     const safeMatch    = text.match(/SAFE:\s*(yes|no)/i);
     const captionMatch = text.match(/CAPTION:\s*(.+)/i);

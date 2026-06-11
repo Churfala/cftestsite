@@ -11,8 +11,8 @@ Demonstrates Pages, Workers, D1, KV, R2, Workers AI, and Turnstile — no credit
 | **Workers (Functions)** | API routes, edge request metadata, scheduled wipe |
 | **D1 SQLite** | Multi-table schema, aggregate queries, full-text search, schema migrations |
 | **Workers KV** | Global visit counter, edge caching with HIT/MISS timing |
-| **R2 Object Storage** | Image upload, serving, and listing — zero egress fees |
-| **Workers AI** | Llama 3.1 8B inference via an AI binding — free-form prompt |
+| **R2 Object Storage** | Image upload with AI captioning, serving, and listing — zero egress fees |
+| **Workers AI** | Llama 3.1 8B text inference; LLaVA 1.5 7B vision — captions and safety-screens every R2 upload |
 | **Turnstile** | Privacy-preserving CAPTCHA gating all write operations |
 
 ### Abuse mitigation
@@ -20,6 +20,7 @@ Demonstrates Pages, Workers, D1, KV, R2, Workers AI, and Turnstile — no credit
 - **Periodic wipe** — `POST /api/admin/wipe` clears user-submitted messages, analytics events, and user-uploaded R2 objects every 4 hours, then re-seeds with demo data. Configure as a cron via the Cloudflare dashboard (see below).
 - **Turnstile** — gates the guestbook POST and R2 upload endpoints.
 - **Server-side validation** — R2 uploads capped at 500KB, MIME type enforced.
+- **AI content moderation** — a vision model (LLaVA via Workers AI) screens every R2 upload; images flagged as offensive are rejected with a 422 before reaching storage. Fails open on model error — Turnstile and the size cap remain the primary controls. See [docs/vision-ai-captions.md](docs/vision-ai-captions.md).
 - **AI endpoint Turnstile-gated** — prevents automated quota exhaustion; prompt length capped at 500 characters server-side.
 
 ---
@@ -42,7 +43,7 @@ functions/
     ai/
       generate.js     POST /api/ai/generate    — Workers AI (Llama 3.1 8B)
     r2/
-      upload.js       POST /api/r2/upload      — R2 upload (Turnstile-gated)
+      upload.js       POST /api/r2/upload      — R2 upload (Turnstile-gated, AI-captioned + moderated)
       list.js         GET  /api/r2/list        — R2 object listing
       file/[key].js   GET  /api/r2/file/:key   — R2 object serve
     admin/
