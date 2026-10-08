@@ -5,6 +5,7 @@ const API = {
   counter:  '/api/counter',
   messages: '/api/guestbook',
   search:   '/api/d1/search',
+  semantic: '/api/d1/semantic',
   d1stats:  '/api/d1/stats',
   posts:    '/api/d1/posts',
   kvcache:  '/api/kv/cache',
@@ -200,8 +201,20 @@ async function submitMessage(e) {
   }
 }
 
-/* ── D1 Search ───────────────────────────────────────────────────────────── */
+/* ── D1 Search (keyword + semantic) ──────────────────────────────────────── */
+let searchMode = 'keyword';
+function setSearchMode(mode) {
+  searchMode = mode;
+  document.getElementById('mode-keyword').classList.toggle('active', mode === 'keyword');
+  document.getElementById('mode-semantic').classList.toggle('active', mode === 'semantic');
+  document.getElementById('search-mode-hint').textContent = mode === 'semantic'
+    ? 'Semantic: ranks posts by meaning using AI embeddings — try a concept, not exact words (e.g. "avoiding vendor lock-in costs").'
+    : 'Keyword: exact substring match across posts and messages.';
+  if (document.getElementById('search-q').value.trim().length >= 2) doSearch();
+}
+
 async function doSearch() {
+  if (searchMode === 'semantic') return doSemanticSearch();
   const q       = document.getElementById('search-q').value.trim();
   const results = document.getElementById('search-results');
   if (q.length < 2) { results.innerHTML = '<p class="muted-hint">Enter at least 2 characters.</p>'; return; }
@@ -234,6 +247,27 @@ async function doSearch() {
       </div>`).join('');
   }
 
+  results.innerHTML = html;
+}
+
+async function doSemanticSearch() {
+  const q       = document.getElementById('search-q').value.trim();
+  const results = document.getElementById('search-results');
+  if (q.length < 2) { results.innerHTML = '<p class="muted-hint">Enter at least 2 characters.</p>'; return; }
+
+  results.innerHTML = '<p class="muted-hint">Embedding query &amp; searching vectors…</p>';
+  const d = await apiFetch(`${API.semantic}?q=${encodeURIComponent(q)}`);
+  if (!d)              { results.innerHTML = '<p class="muted-hint">Semantic search failed.</p>'; return; }
+  if (d.not_configured){ results.innerHTML = `<p class="muted-hint">${esc(d.message)}</p>`; return; }
+  if (!d.total)        { results.innerHTML = `<p class="muted-hint">No matches.${d.hint ? ' ' + esc(d.hint) : ''}</p>`; return; }
+
+  let html = `<p class="search-meta">${d.total} post(s) ranked by meaning · embed + vector query in ${d.query_ms}ms</p>`;
+  html += d.posts.map(p => `
+    <div class="result-item">
+      <div class="result-title">${esc(p.title)} <span class="score-pill">${(p.score * 100).toFixed(0)}% match</span></div>
+      <div class="result-meta">${esc(p.category)} · ${esc(p.author)} · ${fmtNum(p.view_count)} views</div>
+      <div class="result-excerpt">${esc(p.content.slice(0, 200))}…</div>
+    </div>`).join('');
   results.innerHTML = html;
 }
 

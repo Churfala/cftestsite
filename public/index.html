@@ -125,10 +125,15 @@
 
         <!-- Search tab -->
         <div class="tab-panel hidden" id="d1-search" role="tabpanel">
+          <div class="search-mode" role="tablist">
+            <button class="search-mode-btn active" id="mode-keyword" role="tab" onclick="setSearchMode('keyword')">Keyword <span class="search-mode-sub">D1 LIKE</span></button>
+            <button class="search-mode-btn" id="mode-semantic" role="tab" onclick="setSearchMode('semantic')">Semantic <span class="search-mode-sub">AI + Vectorize</span></button>
+          </div>
           <div class="search-row">
             <input type="text" id="search-q" placeholder="Search posts and messages…" maxlength="100" />
             <button class="btn btn-primary" onclick="doSearch()">Search</button>
           </div>
+          <p class="search-mode-hint" id="search-mode-hint">Keyword: exact substring match across posts and messages.</p>
           <div id="search-results"><p class="muted-hint">Enter at least 2 characters and press Search.</p></div>
         </div>
 

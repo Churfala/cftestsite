@@ -18,6 +18,24 @@ bucket_name = "cftestsite-bucket"
 [ai]
 binding = "AI"
 
+# Vectorize — semantic search over the demo posts.
+# Binding is commented out so the site deploys cleanly before the index exists.
+# To enable: create the index (768 dims matches @cf/baai/bge-base-en-v1.5),
+# uncomment the block below, then redeploy and seed via /api/admin/reindex:
+#   npx wrangler vectorize create cftestsite-vectors --dimensions=768 --metric=cosine
+# [[vectorize]]
+# binding = "VECTORIZE"
+# index_name = "cftestsite-vectors"
+
+# Durable Objects — strongly-consistent global counter (see do-worker/).
+# DO classes cannot live in a Pages project, so deploy do-worker/ first, then
+# uncomment this binding (note the required script_name) and redeploy Pages:
+#   cd do-worker && npx wrangler deploy
+# [[durable_objects.bindings]]
+# name = "LIVE_COUNTER"
+# class_name = "LiveCounter"
+# script_name = "cftestsite-do"
+
 # Local dev only — replace values with your own or leave as test keys
 [vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAADAecJ5lJEFt1bmG"

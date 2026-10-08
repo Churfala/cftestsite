@@ -1,7 +1,7 @@
 # Cloudflare Free Tier Showcase
 
 A live infrastructure demo site running entirely on Cloudflare's free tier.
-Demonstrates Pages, Workers, D1, KV, R2, Workers AI, and Turnstile — no credit card required.
+Demonstrates Pages, Workers, D1, KV, R2, Workers AI, Vectorize, Durable Objects, and Turnstile — no credit card required.
 
 ## What it demonstrates
 
@@ -12,7 +12,9 @@ Demonstrates Pages, Workers, D1, KV, R2, Workers AI, and Turnstile — no credit
 | **D1 SQLite** | Multi-table schema, aggregate queries, full-text search, schema migrations |
 | **Workers KV** | Global visit counter, edge caching with HIT/MISS timing |
 | **R2 Object Storage** | Image upload with AI captioning, serving, and listing — zero egress fees |
-| **Workers AI** | Llama 3.1 8B text inference; LLaVA 1.5 7B vision — captions and safety-screens every R2 upload |
+| **Workers AI** | Llama 3.1 8B text inference; FLUX.1 text-to-image; LLaVA 1.5 7B vision — captions and safety-screens every R2 upload |
+| **Vectorize** | Semantic search over the posts, side-by-side with D1 keyword search |
+| **Durable Objects** | Strongly-consistent global counter (contrast with eventually-consistent KV) |
 | **Turnstile** | Privacy-preserving CAPTCHA gating all write operations |
 
 ### Abuse mitigation
@@ -41,13 +43,22 @@ functions/
     kv/
       cache.js        GET  /api/kv/cache       — KV cache hit/miss demo
     ai/
-      generate.js     POST /api/ai/generate    — Workers AI (Llama 3.1 8B)
+      generate.js     POST /api/ai/generate    — Workers AI LLM (Llama 3.1 8B)
+      image.js        POST /api/ai/image       — Workers AI text-to-image (FLUX.1 schnell)
+    d1/
+      semantic.js     GET  /api/d1/semantic    — Vectorize semantic search over posts
     r2/
       upload.js       POST /api/r2/upload      — R2 upload (Turnstile-gated, AI-captioned + moderated)
       list.js         GET  /api/r2/list        — R2 object listing
       file/[key].js   GET  /api/r2/file/:key   — R2 object serve
+    do/
+      counter.js      GET/POST /api/do/counter — Durable Objects strongly-consistent counter
     admin/
       wipe.js         POST /api/admin/wipe     — daily wipe + re-seed (secret-gated)
+      reindex.js      POST /api/admin/reindex  — (re)build the Vectorize index (secret-gated)
+do-worker/
+  src/index.js        Standalone Worker defining the LiveCounter Durable Object
+  wrangler.toml       DO worker config (deploy separately — see step 8)
 public/
   index.html          Single-page dashboard UI
   app.js              Frontend JavaScript
@@ -87,6 +98,14 @@ wrangler r2 bucket create cftestsite-bucket
 ```
 
 Copy the IDs printed by each command into `wrangler.toml`.
+
+> **Workers AI** needs no resource creation — the `[ai]` binding in `wrangler.toml`
+> is enough. Both the LLM and image-generation cards use it.
+>
+> **Vectorize** (semantic search) and **Durable Objects** (strong-consistency counter)
+> are opt-in add-ons — their bindings ship commented out so the site deploys cleanly
+> without them. Enable them in steps 9–10. Until then those two cards show a
+> "needs setup" state and everything else works.
 
 ### 3 — Apply the database schema
 
@@ -167,6 +186,40 @@ After deploying, trigger the wipe endpoint once to populate the demo images:
 ```bash
 curl -X POST https://<your-domain>/api/admin/wipe -H "X-Wipe-Secret: <your WIPE_SECRET>"
 ```
+
+### 9 — (Optional) Enable semantic search (Vectorize)
+
+1. Create the index (768 dims matches the `bge-base-en-v1.5` embedding model):
+
+   ```bash
+   npx wrangler vectorize create cftestsite-vectors --dimensions=768 --metric=cosine
+   ```
+
+2. Uncomment the `[[vectorize]]` block in `wrangler.toml` and redeploy Pages.
+3. Seed the index (posts survive the wipe, so this runs once — re-run if you edit posts):
+
+   ```bash
+   curl -X POST https://<your-domain>/api/admin/reindex -H "X-Wipe-Secret: <your WIPE_SECRET>"
+   ```
+
+Until this is done, the **Semantic** search tab shows a friendly "needs setup"
+hint — the rest of the site is unaffected.
+
+### 10 — (Optional) Durable Objects counter
+
+The **Strong Consistency** card needs a Durable Object, which [cannot live inside a
+Pages project](https://developers.cloudflare.com/pages/functions/bindings/#durable-objects)
+— it must be a separate Worker. Deploy it, then bind it:
+
+```bash
+cd do-worker
+npx wrangler deploy          # deploys the LiveCounter DO worker
+```
+
+Then in the **main** `wrangler.toml`, uncomment the `[[durable_objects.bindings]]`
+block (it already includes the required `script_name = "cftestsite-do"`) and
+redeploy Pages. Until then, the card shows a "needs setup" state and the rest of
+the site works normally.
 
 ---
 
