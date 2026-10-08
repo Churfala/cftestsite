@@ -187,6 +187,29 @@
         </div>
       </div>
 
+      <!-- ── AI Image Generation ────────────────────────────────────────────── -->
+      <div class="card" id="svc-img" data-svc="ai">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-ai">Workers AI</span>
+            <h2>Image Generation</h2>
+          </div>
+        </div>
+        <p class="card-desc">Text-to-image at the edge with FLUX.1 [schnell], a 12B-parameter model from Black Forest Labs. Same AI binding as the LLM — no GPUs to manage. Draws on the daily free Neuron allowance.</p>
+        <textarea id="img-prompt" class="ai-prompt-input" maxlength="500" placeholder="Describe an image… (max 500 chars)" rows="2">An isometric 3D island data-center powered by orange clouds, clean vector art</textarea>
+        <div id="img-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAADAecJ5lJEFt1bmG" data-callback="onImgTurnstile" data-theme="dark"></div>
+        <label class="img-save-row"><input type="checkbox" id="img-save" /> Also save to the R2 gallery below</label>
+        <button class="btn btn-primary btn-block" id="img-btn" onclick="runImageGen()">✦ Generate Image</button>
+        <div id="img-out" class="img-out hidden">
+          <img id="img-result" alt="Generated image" />
+          <div class="ai-meta" id="img-meta"></div>
+        </div>
+        <div class="card-foot">
+          <span class="limit-label">Free Neuron budget · @cf/black-forest-labs/flux-1-schnell</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/ai/image.js" class="src-link" target="_blank" rel="noopener">ai/image.js ↗</a>
+        </div>
+      </div>
+
       <!-- ── R2 Object Storage ──────────────────────────────────────────────── -->
       <div class="card card-wide" id="svc-r2" data-svc="r2">
         <div class="card-head" style="padding:1.5rem 1.5rem 0">

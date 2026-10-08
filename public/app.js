@@ -9,6 +9,7 @@ const API = {
   posts:    '/api/d1/posts',
   kvcache:  '/api/kv/cache',
   ai:       '/api/ai/generate',
+  aiImage:  '/api/ai/image',
   r2list:   '/api/r2/list',
   r2upload: '/api/r2/upload',
 };
@@ -26,9 +27,11 @@ const LIMITS = {
 let gbToken  = null;
 let r2Token  = null;
 let aiToken  = null;
+let imgToken = null;
 window.onGbTurnstile  = t => { gbToken  = t; };
 window.onR2Turnstile  = t => { r2Token  = t; };
 window.onAiTurnstile  = t => { aiToken  = t; };
+window.onImgTurnstile = t => { imgToken = t; };
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */
 function esc(s)       { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -354,6 +357,40 @@ async function runAI() {
       `<span>Total runs: <strong>${fmtNum(d.total_runs)}</strong></span>`;
   }
   out.classList.remove('hidden');
+}
+
+/* ── Workers AI — Image Generation ───────────────────────────────────────── */
+async function runImageGen() {
+  const btn    = document.getElementById('img-btn');
+  const out    = document.getElementById('img-out');
+  const prompt = document.getElementById('img-prompt').value.trim();
+  const save   = document.getElementById('img-save').checked;
+  if (!prompt)   { toast('Enter a prompt first', 'err'); return; }
+  if (!imgToken) { toast('Please wait for Turnstile to verify', 'err'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating… (~5–15s)';
+  out.classList.add('hidden');
+
+  const d = await apiFetch(API.aiImage, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, save, turnstileToken: imgToken }) });
+  imgToken = null;
+  if (window.turnstile) turnstile.reset('#img-turnstile');
+
+  btn.disabled = false;
+  btn.textContent = '✦ Generate Image';
+
+  if (!d || d.error) {
+    toast(d?.error ? `${d.error}. ${d.hint || ''}` : 'Image generation failed', 'err');
+    return;
+  }
+
+  document.getElementById('img-result').src = d.dataURI;
+  document.getElementById('img-meta').innerHTML =
+    `<span>Model: <strong>FLUX.1 [schnell]</strong></span>` +
+    `<span>Generated in: <strong>${d.inference_ms}ms</strong></span>` +
+    (d.saved ? `<span><strong>✓ Saved to gallery</strong></span>` : '');
+  out.classList.remove('hidden');
+  if (d.saved) loadR2();
 }
 
 /* ── R2 Storage ──────────────────────────────────────────────────────────── */

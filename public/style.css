@@ -534,6 +534,23 @@ textarea { min-height: 72px; }
 }
 .ai-meta strong { color: var(--text); }
 
+/* ── AI Image Generation ───────────────────────────────────────────────────── */
+.img-save-row {
+  display: flex; align-items: center; gap: .45rem;
+  font-size: .78rem; color: var(--muted);
+  margin: .5rem 0 .25rem;
+}
+.img-save-row input { accent-color: var(--cf-orange); }
+.img-out { margin-top: .75rem; }
+.img-out img {
+  display: block; width: 100%; height: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  aspect-ratio: 1; object-fit: cover;
+}
+.img-out .ai-meta { padding: .6rem 0 0; }
+
 /* ── R2 Storage ──────────────────────────────────────────────────────────── */
 .r2-body {
   display: grid;
