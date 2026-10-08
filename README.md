@@ -186,19 +186,29 @@ npx wrangler pages dev public --remote
 
 ---
 
-## Free tier limits (as of 2025)
+## Free tier limits (as of October 2026)
+
+> **What changed in 2026:** Several allowances are now actively metered/enforced rather than open beta.
+> - **Workers AI** moved from "free beta" to a **daily Neuron allowance** (10,000 Neurons/day). On the free plan, calls error out once exhausted; it resets at 00:00 UTC.
+> - **D1** began **enforcing** its daily read/write caps (Sept 2026) — over-limit queries error until 00:00 UTC (stored data is untouched).
+> - **Vectorize** and **Durable Objects** now have free tiers (both used by this demo's newer cards).
+>
+> Always confirm current numbers on the [Cloudflare pricing pages](https://developers.cloudflare.com/workers/platform/pricing/) — they change.
 
 | Service | Free allowance |
 |---------|---------------|
 | Pages requests | Unlimited |
 | Workers requests | 100,000 / day |
-| D1 reads | 5,000,000 / day |
-| D1 writes | 100,000 / day |
+| Workers bundle size | 64 MiB (uncompressed) |
+| D1 reads | 5,000,000 rows / day (enforced) |
+| D1 writes | 100,000 rows / day (enforced) |
 | D1 storage | 5 GB |
 | KV reads | 100,000 / day |
 | KV writes | 1,000 / day |
 | R2 storage | 10 GB |
 | R2 Class A ops | 1,000,000 / month |
 | R2 egress | $0 (free forever) |
-| Workers AI | Free beta |
+| Workers AI | 10,000 Neurons / day (resets 00:00 UTC) |
+| Vectorize | 30M queried + 5M stored vector dimensions / month |
+| Durable Objects | SQLite-backed only · 100K requests + 13 GB-s / day |
 | Turnstile | Free, unlimited |

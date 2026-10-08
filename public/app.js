@@ -19,7 +19,7 @@ const LIMITS = {
   kv_reads:   { label: 'KV Reads',         limit: 100_000, unit: 'reads/day', color: 'kv' },
   d1_msgs:    { label: 'D1 Messages',       limit: 50_000,  unit: 'rows (write budget)', color: 'd1' },
   r2_objects: { label: 'R2 Objects',        limit: 30,      unit: 'demo objects', color: 'r2' },
-  ai_runs:    { label: 'AI Inferences',     limit: 200,     unit: 'est. daily beta', color: 'ai' },
+  ai_runs:    { label: 'AI Inferences',     limit: 200,     unit: 'est. runs/day', color: 'ai' },
 };
 
 /* ── Turnstile tokens ────────────────────────────────────────────────────── */
