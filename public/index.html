@@ -170,6 +170,27 @@
         </div>
       </div>
 
+      <!-- ── Durable Objects ─────────────────────────────────────────────────── -->
+      <div class="card" id="svc-do" data-svc="do">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-do">Durable Objects</span>
+            <h2>Strong Consistency</h2>
+          </div>
+        </div>
+        <p class="card-desc">One globally-coordinated object with its own SQLite storage. Unlike the KV counter (eventually consistent, ~60s to propagate), every increment here is <strong>strongly consistent</strong> — serialized through a single object, read-your-writes instantly.</p>
+        <div class="counter-display">
+          <div class="counter-big" id="do-count">—</div>
+          <div class="counter-label">strongly-consistent count</div>
+        </div>
+        <button class="btn btn-primary btn-block" id="do-btn" onclick="incrementDoCounter()">+1 — Atomic Increment</button>
+        <div id="do-note" class="do-note hidden"></div>
+        <div class="card-foot">
+          <span class="limit-label">SQLite-backed · 100K req/day free</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/do-worker/src/index.js" class="src-link" target="_blank" rel="noopener">do-worker ↗</a>
+        </div>
+      </div>
+
       <!-- ── Workers AI ─────────────────────────────────────────────────────── -->
       <div class="card" id="svc-ai" data-svc="ai">
         <div class="card-head">
@@ -271,14 +292,18 @@ Browser ──── Cloudflare Edge Network (300+ global PoPs)
   ├── /api/guestbook       ──→  Workers  →  D1 + Turnstile
   ├── /api/d1/stats        ──→  Workers  →  D1          (GROUP BY, COUNT, AVG)
   ├── /api/d1/search       ──→  Workers  →  D1          (LIKE full-text search)
+  ├── /api/d1/semantic     ──→  Workers  →  Workers AI (embed) → Vectorize (kNN) → D1
   ├── /api/d1/posts        ──→  Workers  →  D1          (JOIN posts ↔ tags)
   ├── /api/kv/cache        ──→  Workers  →  KV  ──(hit)──→  return cached
   │                                             └─(miss)──→  D1  →  KV.put
+  ├── /api/do/counter      ──→  Workers  →  Durable Object  (strongly-consistent, separate Worker)
   ├── /api/ai/generate     ──→  Workers  →  Workers AI  (Llama 3.1 8B Instruct)
-  ├── /api/r2/upload       ──→  Workers  →  R2 + Turnstile
+  ├── /api/ai/image        ──→  Workers  →  Workers AI  (FLUX.1 schnell text-to-image)
+  ├── /api/r2/upload       ──→  Workers  →  R2 + Turnstile + Workers AI (caption + moderation)
   ├── /api/r2/list         ──→  Workers  →  R2          (list + metadata)
   ├── /api/r2/file/:key    ──→  Workers  →  R2          (stream with etag)
   ├── /api/stats           ──→  Workers  →  D1 + KV + R2  (aggregate dashboard)
+  ├── /api/admin/reindex   ──→  Workers  →  Workers AI (embed) → Vectorize (upsert)
   └── /api/admin/wipe      ──→  Workers  →  D1 + R2 + KV  (wipe + re-seed)
                                                 ↑
                                   Schedule via standalone Worker cron

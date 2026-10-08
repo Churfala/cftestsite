@@ -1,0 +1,13 @@
+name = "cftestsite-do"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+# The Durable Object class defined in src/index.js.
+[[durable_objects.bindings]]
+name = "LIVE_COUNTER"
+class_name = "LiveCounter"
+
+# SQLite-backed migration — required for the Workers Free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LiveCounter"]

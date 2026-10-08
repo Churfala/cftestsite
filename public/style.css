@@ -215,6 +215,13 @@ body {
 .svc-d1      { background: rgba(168,85,247,.12); color: var(--c-d1); }
 .svc-r2      { background: rgba(16,185,129,.12); color: var(--c-r2); }
 .svc-ai      { background: rgba(245,158,11,.12); color: var(--c-ai); }
+.svc-do      { background: rgba(236,72,153,.12); color: #EC4899; }
+.do-note {
+  margin-top: .6rem; padding: .6rem .75rem;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: .78rem; color: var(--muted); line-height: 1.5;
+}
 
 /* ── Latency badges ───────────────────────────────────────────────────────── */
 

@@ -13,6 +13,7 @@ const API = {
   aiImage:  '/api/ai/image',
   r2list:   '/api/r2/list',
   r2upload: '/api/r2/upload',
+  doCounter:'/api/do/counter',
 };
 
 // Free-tier daily limits (for headroom bars)
@@ -393,6 +394,37 @@ async function runAI() {
   out.classList.remove('hidden');
 }
 
+/* ── Durable Objects — strongly-consistent counter ───────────────────────── */
+function doNeedsSetup(msg) {
+  const note = document.getElementById('do-note');
+  const btn  = document.getElementById('do-btn');
+  document.getElementById('do-count').textContent = '—';
+  note.textContent = msg;
+  note.classList.remove('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Needs setup';
+}
+
+async function loadDoCounter() {
+  const d = await apiFetch(API.doCounter);
+  if (!d) return;                                   // network error — keep placeholder
+  if (d.not_configured) { doNeedsSetup(d.message); return; }
+  document.getElementById('do-count').textContent = fmtNum(d.count);
+}
+
+async function incrementDoCounter() {
+  const btn = document.getElementById('do-btn');
+  btn.disabled = true;
+  const d = await apiFetch(API.doCounter, { method: 'POST' });
+  btn.disabled = false;
+  if (!d)               { toast('Durable Object request failed', 'err'); return; }
+  if (d.not_configured) { doNeedsSetup(d.message); return; }
+  const el = document.getElementById('do-count');
+  el.textContent = fmtNum(d.count);
+  el.classList.add('bump');
+  setTimeout(() => el.classList.remove('bump'), 200);
+}
+
 /* ── Workers AI — Image Generation ───────────────────────────────────────── */
 async function runImageGen() {
   const btn    = document.getElementById('img-btn');
@@ -540,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCounter();
   loadMessages(); d1loaded.messages = true;
   loadR2();
+  loadDoCounter();
 
   // Refresh stats bar every 30s
   setInterval(loadStats, 30_000);
