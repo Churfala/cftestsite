@@ -1,6 +1,8 @@
 name = "cftestsite-do"
 main = "src/index.js"
 compatibility_date = "2024-09-23"
+# Not publicly routable — only reached via the Pages DO binding (script_name).
+workers_dev = false
 
 # The Durable Object class defined in src/index.js.
 [[durable_objects.bindings]]
