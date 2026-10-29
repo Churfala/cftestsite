@@ -191,6 +191,27 @@
         </div>
       </div>
 
+      <!-- ── Workflows ──────────────────────────────────────────────────────── -->
+      <div class="card" id="svc-wf" data-svc="wf">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-wf">Workflows</span>
+            <h2>Durable Execution</h2>
+          </div>
+        </div>
+        <p class="card-desc">A multi-step workflow with built-in retries and durable <code>sleep()</code>. Start one and watch it survive pauses between steps — state is persisted across hibernation, not held in memory. Free tier: 1,024 steps/instance.</p>
+        <button class="btn btn-primary btn-block" id="wf-btn" onclick="runWorkflow()">▶ Run Durable Workflow</button>
+        <div id="wf-out" class="wf-out hidden">
+          <div class="wf-status-row"><span>Status</span><span class="wf-badge" id="wf-status">—</span></div>
+          <div class="wf-result" id="wf-result"></div>
+        </div>
+        <div id="wf-note" class="do-note hidden"></div>
+        <div class="card-foot">
+          <span class="limit-label">1,024 steps/instance free · Workflows</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/do-worker/src/index.js" class="src-link" target="_blank" rel="noopener">DemoWorkflow ↗</a>
+        </div>
+      </div>
+
       <!-- ── Workers AI ─────────────────────────────────────────────────────── -->
       <div class="card" id="svc-ai" data-svc="ai">
         <div class="card-head">
@@ -233,6 +254,29 @@
         <div class="card-foot">
           <span class="limit-label">Free Neuron budget · @cf/black-forest-labs/flux-1-schnell</span>
           <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/ai/image.js" class="src-link" target="_blank" rel="noopener">ai/image.js ↗</a>
+        </div>
+      </div>
+
+      <!-- ── Browser Rendering ──────────────────────────────────────────────── -->
+      <div class="card" id="svc-browser" data-svc="browser">
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="svc-badge svc-browser">Browser Run</span>
+            <h2>Headless Screenshots</h2>
+          </div>
+        </div>
+        <p class="card-desc">A real headless Chromium on Cloudflare's edge. Enter a URL — Browser Run renders the page (JavaScript and all) and returns a screenshot. Free tier: 10 min of browser time/day.</p>
+        <input type="url" id="browser-url" class="browser-url-input" placeholder="https://example.com" maxlength="300" value="https://example.com" />
+        <div id="browser-turnstile" class="cf-turnstile" data-sitekey="0x4AAAAAADAecJ5lJEFt1bmG" data-callback="onBrowserTurnstile" data-theme="dark"></div>
+        <button class="btn btn-primary btn-block" id="browser-btn" onclick="runScreenshot()">◉ Capture Screenshot</button>
+        <div id="browser-out" class="img-out hidden">
+          <img id="browser-result" alt="Rendered screenshot" />
+          <div class="ai-meta" id="browser-meta"></div>
+        </div>
+        <div id="browser-note" class="do-note hidden"></div>
+        <div class="card-foot">
+          <span class="limit-label">10 min browser/day free · Browser Run</span>
+          <a href="https://github.com/Churfala/cftestsite/blob/main/functions/api/browser/screenshot.js" class="src-link" target="_blank" rel="noopener">browser/screenshot.js ↗</a>
         </div>
       </div>
 
@@ -296,7 +340,9 @@ Browser ──── Cloudflare Edge Network (300+ global PoPs)
   ├── /api/d1/posts        ──→  Workers  →  D1          (JOIN posts ↔ tags)
   ├── /api/kv/cache        ──→  Workers  →  KV  ──(hit)──→  return cached
   │                                             └─(miss)──→  D1  →  KV.put
-  ├── /api/do/counter      ──→  Workers  →  Durable Object  (strongly-consistent, separate Worker)
+  ├── /api/do/counter      ──→  Workers  →  Durable Object      (strongly-consistent, compute Worker)
+  ├── /api/browser/screenshot ─→ Workers →  service binding → Browser Run (headless Chromium)
+  ├── /api/workflow/run    ──→  Workers  →  service binding → Workflow   (durable multi-step)
   ├── /api/ai/generate     ──→  Workers  →  Workers AI  (Llama 3.1 8B Instruct)
   ├── /api/ai/image        ──→  Workers  →  Workers AI  (FLUX.1 schnell text-to-image)
   ├── /api/r2/upload       ──→  Workers  →  R2 + Turnstile + Workers AI (caption + moderation)

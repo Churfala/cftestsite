@@ -15,6 +15,8 @@ Demonstrates Pages, Workers, D1, KV, R2, Workers AI, Vectorize, Durable Objects,
 | **Workers AI** | Llama 3.1 8B text inference; FLUX.1 text-to-image; LLaVA 1.5 7B vision — captions and safety-screens every R2 upload |
 | **Vectorize** | Semantic search over the posts, side-by-side with D1 keyword search |
 | **Durable Objects** | Strongly-consistent global counter (contrast with eventually-consistent KV) |
+| **Browser Rendering (Browser Run)** | Headless Chromium screenshots of any URL, at the edge |
+| **Workflows** | Durable multi-step execution with retries and `sleep()` |
 | **Turnstile** | Privacy-preserving CAPTCHA gating all write operations |
 
 ### Abuse mitigation
@@ -47,6 +49,10 @@ functions/
       image.js        POST /api/ai/image       — Workers AI text-to-image (FLUX.1 schnell)
     d1/
       semantic.js     GET  /api/d1/semantic    — Vectorize semantic search over posts
+    browser/
+      screenshot.js   POST /api/browser/screenshot — Browser Run screenshot (via COMPUTE)
+    workflow/
+      run.js          GET/POST /api/workflow/run   — start/poll a durable Workflow (via COMPUTE)
     r2/
       upload.js       POST /api/r2/upload      — R2 upload (Turnstile-gated, AI-captioned + moderated)
       list.js         GET  /api/r2/list        — R2 object listing
@@ -57,8 +63,8 @@ functions/
       wipe.js         POST /api/admin/wipe     — daily wipe + re-seed (secret-gated)
       reindex.js      POST /api/admin/reindex  — (re)build the Vectorize index (secret-gated)
 do-worker/
-  src/index.js        Standalone Worker defining the LiveCounter Durable Object
-  wrangler.toml       DO worker config (deploy separately — see step 8)
+  src/index.js        Compute Worker: LiveCounter DO + DemoWorkflow + Browser Run router
+  wrangler.toml       Compute worker config (deploy separately — see steps 10–11)
 public/
   index.html          Single-page dashboard UI
   app.js              Frontend JavaScript
@@ -221,6 +227,23 @@ block (it already includes the required `script_name = "cftestsite-do"`) and
 redeploy Pages. Until then, the card shows a "needs setup" state and the rest of
 the site works normally.
 
+### 11 — (Optional) Browser Rendering + Workflows
+
+Both the **Headless Screenshots** and **Durable Execution** cards run in the same
+`cftestsite-do` compute Worker (Browser Run and Workflow bindings, like Durable
+Objects, can't live in a Pages project). They're already configured in
+`do-worker/wrangler.toml`, so deploying the worker (step 10) registers them too —
+no extra resources to create.
+
+Pages reaches them through a **service binding** (`COMPUTE` → `cftestsite-do`),
+already present in the main `wrangler.toml`. If you deployed before adding it,
+just redeploy Pages. Until the service binding resolves, both cards show a "needs
+setup" state and the rest of the site is unaffected.
+
+> Browser Run's free tier is **10 minutes of browser time per day** — each
+> screenshot uses a few seconds, so the card is Turnstile-gated to prevent a bot
+> from burning the daily allowance.
+
 ---
 
 ## Local development
@@ -264,4 +287,6 @@ npx wrangler pages dev public --remote
 | Workers AI | 10,000 Neurons / day (resets 00:00 UTC) |
 | Vectorize | 30M queried + 5M stored vector dimensions / month |
 | Durable Objects | SQLite-backed only · 100K requests + 13 GB-s / day |
+| Browser Rendering (Browser Run) | 10 min browser time / day · 2–3 concurrent |
+| Workflows | 1,024 steps / instance · 100 MB state |
 | Turnstile | Free, unlimited |

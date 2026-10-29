@@ -14,6 +14,8 @@ const API = {
   r2list:   '/api/r2/list',
   r2upload: '/api/r2/upload',
   doCounter:'/api/do/counter',
+  browser:  '/api/browser/screenshot',
+  workflow: '/api/workflow/run',
 };
 
 // Free-tier daily limits (for headroom bars)
@@ -30,10 +32,12 @@ let gbToken  = null;
 let r2Token  = null;
 let aiToken  = null;
 let imgToken = null;
+let browserToken = null;
 window.onGbTurnstile  = t => { gbToken  = t; };
 window.onR2Turnstile  = t => { r2Token  = t; };
 window.onAiTurnstile  = t => { aiToken  = t; };
 window.onImgTurnstile = t => { imgToken = t; };
+window.onBrowserTurnstile = t => { browserToken = t; };
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */
 function esc(s)       { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -457,6 +461,90 @@ async function runImageGen() {
     (d.saved ? `<span><strong>✓ Saved to gallery</strong></span>` : '');
   out.classList.remove('hidden');
   if (d.saved) loadR2();
+}
+
+/* ── Browser Run — headless screenshot ───────────────────────────────────── */
+async function runScreenshot() {
+  const btn  = document.getElementById('browser-btn');
+  const out  = document.getElementById('browser-out');
+  const note = document.getElementById('browser-note');
+  const url  = document.getElementById('browser-url').value.trim();
+  if (!url)          { toast('Enter a URL first', 'err'); return; }
+  if (!browserToken) { toast('Please wait for Turnstile to verify', 'err'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Rendering… (~5–15s)';
+  out.classList.add('hidden');
+  note.classList.add('hidden');
+
+  const d = await apiFetch(API.browser, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, turnstileToken: browserToken }) });
+  browserToken = null;
+  if (window.turnstile) turnstile.reset('#browser-turnstile');
+
+  btn.disabled = false;
+  btn.textContent = '◉ Capture Screenshot';
+
+  if (!d)               { toast('Screenshot failed', 'err'); return; }
+  if (d.not_configured) { note.textContent = d.message; note.classList.remove('hidden'); return; }
+  if (d.error)          { toast(`${d.error}${d.hint ? ' — ' + d.hint : ''}`, 'err'); return; }
+
+  document.getElementById('browser-result').src = d.dataURI;
+  document.getElementById('browser-meta').innerHTML =
+    `<span>Rendered by <strong>Browser Run</strong></span>` +
+    (d.browser_ms ? `<span>Browser time: <strong>${d.browser_ms}ms</strong></span>` : '') +
+    `<span>Size: <strong>${fmtBytes(d.bytes)}</strong></span>`;
+  out.classList.remove('hidden');
+}
+
+/* ── Workflows — durable multi-step execution ────────────────────────────── */
+async function runWorkflow() {
+  const btn    = document.getElementById('wf-btn');
+  const out    = document.getElementById('wf-out');
+  const note   = document.getElementById('wf-note');
+  const badge  = document.getElementById('wf-status');
+  const result = document.getElementById('wf-result');
+
+  const reset = () => { btn.disabled = false; btn.textContent = '▶ Run Durable Workflow'; };
+  btn.disabled = true;
+  btn.textContent = '⏳ Running…';
+  result.innerHTML = '';
+  note.classList.add('hidden');
+  out.classList.remove('hidden');
+  badge.textContent = 'starting…';
+  badge.className = 'wf-badge running';
+
+  const started = await apiFetch(API.workflow, { method: 'POST' });
+  if (!started || (!started.id && !started.not_configured)) {
+    badge.textContent = 'failed'; badge.className = 'wf-badge err';
+    toast(started?.error || 'Could not start workflow', 'err'); reset(); return;
+  }
+  if (started.not_configured) {
+    out.classList.add('hidden'); note.textContent = started.message; note.classList.remove('hidden'); reset(); return;
+  }
+
+  const t0 = Date.now();
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 1500));
+    const s = await apiFetch(`${API.workflow}?id=${encodeURIComponent(started.id)}`);
+    if (!s) continue;
+    const st   = s.status || 'unknown';
+    const secs = ((Date.now() - t0) / 1000).toFixed(0);
+    badge.textContent = `${st} · ${secs}s`;
+    if (st === 'complete') {
+      badge.className = 'wf-badge ok';
+      const o = s.output || {};
+      result.innerHTML =
+        `<div class="wf-result-line">✓ ${esc(o.summary || 'Workflow complete')}</div>` +
+        `<div class="wf-result-meta">validated → enriched (score ${o.score ?? '—'}) → finalized · survived 2 durable sleeps</div>`;
+      break;
+    }
+    if (st === 'errored' || st === 'terminated') {
+      badge.className = 'wf-badge err';
+      result.innerHTML = `<div class="wf-result-line">Workflow ${esc(st)}</div>`;
+      break;
+    }
+  }
+  reset();
 }
 
 /* ── R2 Storage ──────────────────────────────────────────────────────────── */

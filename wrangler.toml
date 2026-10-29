@@ -33,6 +33,12 @@ name = "LIVE_COUNTER"
 class_name = "LiveCounter"
 script_name = "cftestsite-do"
 
+# Service binding to the same compute Worker — used by the Browser Run and
+# Workflows cards, whose bindings (browser / workflow) also can't live in Pages.
+[[services]]
+binding = "COMPUTE"
+service = "cftestsite-do"
+
 # Local dev only — replace values with your own or leave as test keys
 [vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAADAecJ5lJEFt1bmG"

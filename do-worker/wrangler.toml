@@ -1,7 +1,8 @@
 name = "cftestsite-do"
 main = "src/index.js"
-compatibility_date = "2024-09-23"
-# Not publicly routable — only reached via the Pages DO binding (script_name).
+# 2026-03-24+ required for the Browser Run quickAction() binding method.
+compatibility_date = "2026-03-24"
+# Not publicly routable — reached via the Pages DO + service bindings only.
 workers_dev = false
 
 # The Durable Object class defined in src/index.js.
@@ -13,3 +14,13 @@ class_name = "LiveCounter"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["LiveCounter"]
+
+# Workflow: durable, multi-step execution (free tier: 1,024 steps/instance).
+[[workflows]]
+name = "cftestsite-demo-workflow"
+binding = "DEMO_WORKFLOW"
+class_name = "DemoWorkflow"
+
+# Browser Rendering (Browser Run) — headless Chromium (free tier: 10 min/day).
+[browser]
+binding = "BROWSER"
